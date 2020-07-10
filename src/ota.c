@@ -1,8 +1,10 @@
 #include <curl/curl.h>
 #include "ota.h"
 #include <stdlib.h>
+#include <string.h>
 
 #define CA_CERTIF_FILE "cacert.pem"
+const char *HTTPS_PREFIX = "https://";
 
 static int progress(void *p, double dltotal, double dlnow, double ultotal, double ulnow) {
     cb_update_ota_progress uap = (cb_update_ota_progress)p;
@@ -42,9 +44,10 @@ void *download_ota(void *arg) {
     } else {
         curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
     }
-
-    curl_easy_setopt(curl, CURLOPT_CAINFO, CA_CERTIF_FILE);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    if (memcmp(param->url, HTTPS_PREFIX, 8) == 0) {
+        curl_easy_setopt(curl, CURLOPT_CAINFO, CA_CERTIF_FILE);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    }
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
     ret = curl_easy_perform(curl);
     curl_easy_cleanup(curl);
